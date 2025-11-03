@@ -17,6 +17,16 @@ input {
   z-index: 1080;
 }
 
+/* Estilos para painel de visuais */
+#painelVisuais .card {
+  box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.08);
+}
+
+#chartCanvas {
+  max-height: 360px;
+  width: 100% !important;
+}
+
 
 aside {
   width: 220px;
@@ -92,4 +102,46 @@ main {
 .btn-light {
     color: #007bff !important;
 }
+
+/* Estilos para os ícones de tecnologias na tela de login */
+.tech-icons img {
+  margin: 4px 6px;
+  height: 28px;
+  vertical-align: middle;
+}
+.tech-icons small {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* Rodapé com tecnologias */
+.footer-tech {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  z-index: 1030;
+}
+.footer-tech .tech-icons {
+  display: inline-block;
+  margin-top: 4px;
+}
+.footer-tech .tech-icons img {
+  margin: 0 6px;
+  height: 24px;
+}
+.footer-tech small {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* espaço inferior para evitar que o conteúdo fique atrás do footer */
+body { padding-bottom: 56px; }
+
+/* tech-item: organiza imagem + label (label aparece se img não carregar) */
+.tech-item { display: inline-flex; align-items: center; margin: 0 6px; }
+.tech-item i { font-size: 20px; color: #495057; }
+.tech-item .tech-label { display: inline-block; font-size: 12px; color: #495057; margin-left: 6px; }
 

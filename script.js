@@ -18,9 +18,11 @@ function showToast(msg, tipo = "success") {
   toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
 }
 
+
 // --- Variáveis globais ---
 let despesas = [];
 let receitas = [];
+let chartInstance = null;
 
 // 🔹 Pega automaticamente o ID do usuário logado
 const usuarioId = localStorage.getItem("usuarioId");
@@ -49,10 +51,33 @@ async function carregarDashboard() {
     receitas = await resReceitas.json();
     atualizarTabela("tabelaReceitas", receitas);
 
+  // Atualiza os visuais (totais e gráfico)
+  atualizarVisuais();
+
   } catch (e) {
     console.error(e);
     showToast("Erro ao carregar dados", "danger");
+    // Se falhar ao carregar da API, usa dados de exemplo para que o gráfico apareça
+    usarDadosExemplo();
   }
+}
+
+// Fallback: dados de exemplo para uso offline / testes locais
+function usarDadosExemplo() {
+  receitas = [
+    { id: 1, descricao: 'Salário', valor: 4500.00 },
+    { id: 2, descricao: 'Freelance', valor: 800.00 }
+  ];
+  despesas = [
+    { id: 1, descricao: 'Aluguel', valor: 1500.00 },
+    { id: 2, descricao: 'Supermercado', valor: 450.75 },
+    { id: 3, descricao: 'Transporte', valor: 220.00 }
+  ];
+
+  atualizarTabela('tabelaReceitas', receitas);
+  atualizarTabela('tabelaDespesas', despesas);
+  atualizarVisuais();
+  showToast('Usando dados de exemplo (offline)', 'info');
 }
 
 // --- Criar Despesa ---
@@ -145,6 +170,76 @@ function atualizarTabela(tabelaId, dados) {
       </td>`;
     tbody.appendChild(tr);
   });
+}
+
+// ---- Visuais: totais e gráfico ----
+function calcularTotais() {
+  const totalReceitas = receitas.reduce((s, r) => s + (Number(r.valor) || 0), 0);
+  const totalDespesas = despesas.reduce((s, d) => s + (Number(d.valor) || 0), 0);
+  const saldo = totalReceitas - totalDespesas;
+  return { totalReceitas, totalDespesas, saldo };
+}
+
+function formatCurrency(v) {
+  return `R$ ${v.toFixed(2)}`;
+}
+
+function atualizarVisuais() {
+  const { totalReceitas, totalDespesas, saldo } = calcularTotais();
+
+  const elReceitas = document.getElementById('totalReceitas');
+  const elDespesas = document.getElementById('totalDespesas');
+  const elSaldo = document.getElementById('totalSaldo');
+  if (elReceitas) elReceitas.innerText = formatCurrency(totalReceitas);
+  if (elDespesas) elDespesas.innerText = formatCurrency(totalDespesas);
+  if (elSaldo) elSaldo.innerText = formatCurrency(saldo);
+
+  // Renderizar gráfico (barra)
+  const canvas = document.getElementById('chartCanvas');
+  if (!canvas) return;
+
+  const data = {
+    labels: ['Receitas', 'Despesas'],
+    datasets: [{
+      label: 'Valores',
+      data: [totalReceitas, totalDespesas],
+      backgroundColor: ['#28a745cc', '#dc3545cc'],
+      borderColor: ['#28a745', '#dc3545'],
+      borderWidth: 1
+    }]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            // formata ticks como moeda
+            try { return formatCurrency(Number(value)); } catch (e) { return value; }
+          }
+        }
+      }
+    }
+  };
+
+  if (chartInstance) {
+    chartInstance.config.type = 'bar';
+    chartInstance.data = data;
+    chartInstance.options = options;
+    chartInstance.update();
+  } else {
+    chartInstance = new Chart(canvas, {
+      type: 'bar',
+      data,
+      options
+    });
+  }
 }
 
 // --- Inicialização ---
